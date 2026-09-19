@@ -9,10 +9,12 @@ def decode_message_bytes(data: bytes) -> SSH_Messages:
       contents = data[5:]
 
       if message_type == SSH_Messages.SSH_AGENTC_REQUEST_IDENTITIES:
+        print("listing identities")
         return SSH_Messages.SSH_AGENTC_REQUEST_IDENTITIES
   except ValueError as ve:
     print(
       f"Maybe connecting via socat, first 4 bytes are non-int: {data}"
     )
     return SSH_Messages.DEFAULT
+  print("was not able to recognise message type")
   return SSH_Messages.DEFAULT
