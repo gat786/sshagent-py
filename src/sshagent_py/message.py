@@ -4,7 +4,7 @@ from .types import SSH_Messages
 def decode_message_bytes(data: bytes) -> SSH_Messages:
   message_length = data[:4]
   try:
-    if int(message_length) > 0:
+    if int.from_bytes(message_length) > 0:
       message_type = data[4]
       contents = data[5:]
 
