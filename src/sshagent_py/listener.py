@@ -1,6 +1,10 @@
 import os
 import socket
+import struct
 import threading
+
+from .message import decode_message_bytes
+from .types import SSH_Messages
 
 
 def setup_listener() -> None:
@@ -36,14 +40,30 @@ def handle_connection(conn: socket.socket):
 
       # receive data from the client
       while True:
+        # ssh can transfer upto theoretically 4gb of data, i.e. 2 ** 32, uint32
+        # bytes, we will have to figure out how
         data = conn.recv(1024)
-        request_str = data.decode()
-        if not data:
-            break
-        print(f'Received data: {data} {request_str.strip("\n")}')
+        message_type = decode_message_bytes(data=data)
 
-        # Send a response back to the client
-        conn.sendall(request_str.encode())
+        match message_type:
+          case SSH_Messages.SSH_AGENTC_REQUEST_IDENTITIES:
+            response_bytes = struct.pack(
+              '<I', 2
+            )
+            response_bytes += int(
+              SSH_Messages.SSH_AGENT_IDENTITIES_ANSWER.value
+            ).to_bytes()
+            response_bytes += int(0).to_bytes()
+            conn.sendall(response_bytes)
+
+          case SSH_Messages.DEFAULT:
+            response_bytes = struct.pack(
+              '<I', 1
+            )
+            response_bytes += int(
+              SSH_Messages.SSH_AGENT_SUCCESS.value
+            ).to_bytes()
+            conn.sendall(response_bytes)
     except (ConnectionResetError, BrokenPipeError):
         pass
     finally:
