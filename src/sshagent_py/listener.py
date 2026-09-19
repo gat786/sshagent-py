@@ -30,7 +30,7 @@ def setup_listener() -> None:
     if os.path.exists(socket_address):
       os.unlink(socket_address)
 
-def handle_connection(conn):
+def handle_connection(conn: socket.socket):
     try:
       print('Connection from', str(conn).split(", ")[0][-4:])
 
@@ -40,7 +40,7 @@ def handle_connection(conn):
         request_str = data.decode()
         if not data:
             break
-        print('Received data:', request_str.strip("\n"))
+        print(f'Received data: {data} {request_str.strip("\n")}')
 
         # Send a response back to the client
         conn.sendall(request_str.encode())
