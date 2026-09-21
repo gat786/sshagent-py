@@ -3,6 +3,8 @@ import socket
 import struct
 import threading
 
+from src.sshagent_py import response
+
 from .message import decode_message_bytes
 from .types import SSH_Messages
 
@@ -47,22 +49,16 @@ def handle_connection(conn: socket.socket):
 
         match message_type:
           case SSH_Messages.SSH_AGENTC_REQUEST_IDENTITIES:
-            response_bytes = struct.pack(
-              '<I', 2
+            response_bytes = response.prepare_response(
+              message_type=SSH_Messages.SSH_AGENT_IDENTITIES_ANSWER,
+              content=int.to_bytes(1)
             )
-            response_bytes += int(
-              SSH_Messages.SSH_AGENT_IDENTITIES_ANSWER.value
-            ).to_bytes()
-            response_bytes += int(0).to_bytes()
             conn.sendall(response_bytes)
 
           case SSH_Messages.DEFAULT:
-            response_bytes = struct.pack(
-              '<I', 1
+            response_bytes = response.prepare_response(
+              message_type=SSH_Messages.DEFAULT
             )
-            response_bytes += int(
-              SSH_Messages.SSH_AGENT_SUCCESS.value
-            ).to_bytes()
             conn.sendall(response_bytes)
     except (ConnectionResetError, BrokenPipeError):
         pass
