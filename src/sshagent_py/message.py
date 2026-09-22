@@ -19,9 +19,9 @@ def decode_message_bytes(data: bytes) -> SSH_Messages:
         int_message_length = int.from_bytes(message_length)
         logger.debug(f"recieved message of length: {int_message_length}")
         if int_message_length > 0:
-            message_type: bytes = data[4]
+            # byte automatically gets converted to int
+            message_type: int = data[4]
             logger.debug(f"message type: {message_type}")
-            contents = data[5:]
             if message_type == SSH_Messages.SSH_AGENTC_REQUEST_IDENTITIES.value:
                 logger.debug("listing number of identities attached")
                 return SSH_Messages.SSH_AGENTC_REQUEST_IDENTITIES
