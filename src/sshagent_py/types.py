@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import IntEnum
 
 
-class SSH_Messages(Enum):
+class SSH_Messages(IntEnum):
     INVALID = -1
     DEFAULT = 0
 
@@ -30,10 +30,12 @@ class SSH_Messages(Enum):
     SSH_AGENT_EXTENSION_RESPONSE = 29
 
 supported_incoming_messages = [
+    SSH_Messages.SSH_AGENTC_REQUEST_IDENTITIES,
     SSH_Messages.SSH_AGENTC_ADD_IDENTITY,
     SSH_Messages.SSH_AGENTC_ADD_ID_CONSTRAINED,
-    SSH_Messages.SSH_AGENTC_SIGN_REQUEST,
+    SSH_Messages.SSH_AGENTC_REMOVE_IDENTITY,
     SSH_Messages.SSH_AGENTC_REMOVE_ALL_IDENTITIES,
+    SSH_Messages.SSH_AGENTC_SIGN_REQUEST,
     SSH_Messages.SSH_AGENTC_ADD_SMARTCARD_KEY,
     SSH_Messages.SSH_AGENTC_REMOVE_SMARTCARD_KEY,
     SSH_Messages.SSH_AGENTC_LOCK,
@@ -41,4 +43,13 @@ supported_incoming_messages = [
     SSH_Messages.SSH_AGENTC_ADD_ID_CONSTRAINED,
     SSH_Messages.SSH_AGENTC_ADD_SMARTCARD_KEY_CONSTRAINED,
     SSH_Messages.SSH_AGENTC_EXTENSION
+]
+
+valid_response_messages = [
+    SSH_Messages.SSH_AGENT_FAILURE,
+    SSH_Messages.SSH_AGENT_SUCCESS,
+    SSH_Messages.SSH_AGENT_IDENTITIES_ANSWER,
+    SSH_Messages.SSH_AGENT_SIGN_RESPONSE,
+    SSH_Messages.SSH_AGENT_EXTENSION_FAILURE,
+    SSH_Messages.SSH_AGENT_EXTENSION_RESPONSE
 ]

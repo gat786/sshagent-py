@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 
 def prepare_response(
-    message_type: SSH_Messages, content: bytes = bytes("", encoding="utf-8")
+    message_type: SSH_Messages, content: bytes = struct.pack(">I", 0)
 ) -> bytes:
     # message type is always 1 byte
     logger.debug(f"message_type: {message_type}, content: {content},")

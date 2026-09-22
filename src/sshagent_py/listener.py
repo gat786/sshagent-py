@@ -49,13 +49,15 @@ def handle_connection(conn: socket.socket):
             # ssh can transfer upto theoretically 4gb of data, i.e. 2 ** 32, uint32
             # bytes, we will have to figure out how
             data = conn.recv(1024)
+            if len(data) == 0:
+                logger.debug("client has closed the connection")
+                break
             message_type = decode_message_bytes(data=data)
 
             match message_type:
                 case SSH_Messages.SSH_AGENTC_REQUEST_IDENTITIES:
                     response_bytes = response.prepare_response(
                         message_type=SSH_Messages.SSH_AGENT_IDENTITIES_ANSWER,
-                        content=int.to_bytes(0),
                     )
                     logger.debug(f"returning indentities list: {response_bytes}")
                     conn.sendall(response_bytes)
