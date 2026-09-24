@@ -1,14 +1,39 @@
-import os
 import logging
-import threading
+import os
 import socket
+import threading
 
+from . import response
 from .message import decode_message_bytes
 from .types import SSH_Messages
-from . import response
-
 
 logger = logging.getLogger(__name__)
+_PACKET_LENGTH_BYTES = 4
+_RECV_CHUNK_SIZE = 64 * 1024
+
+
+def _recv_exactly(conn: socket.socket, size: int) -> bytes | None:
+    data = bytearray()
+    while len(data) < size:
+        chunk = conn.recv(min(size - len(data), _RECV_CHUNK_SIZE))
+        if not chunk:
+            return None
+        data.extend(chunk)
+    return bytes(data)
+
+
+def receive_packet(conn: socket.socket) -> bytes | None:
+    """Read one complete SSH-agent packet from a stream socket."""
+    header = _recv_exactly(conn, _PACKET_LENGTH_BYTES)
+    if header is None:
+        return None
+
+    message_length = int.from_bytes(header, byteorder="big")
+    payload = _recv_exactly(conn, message_length)
+    if payload is None:
+        logger.warning("client disconnected before the full packet was received")
+        return None
+    return header + payload
 
 
 def setup_listener() -> None:
@@ -42,15 +67,12 @@ def setup_listener() -> None:
 
 def handle_connection(conn: socket.socket):
     try:
-        logger.debug(f"Connection from {str(conn).split(', ')[0][-4:]}")
+        logger.info(f"Connection from {str(conn).split(', ')[0][-4:]}")
 
-        # receive data from the client
         while True:
-            # ssh can transfer upto theoretically 4gb of data, i.e. 2 ** 32, uint32
-            # bytes, we will have to figure out how
-            data = conn.recv(1024)
-            if len(data) == 0:
-                logger.debug("client has closed the connection")
+            data = receive_packet(conn)
+            if data is None:
+                logger.debug("client closed the connection")
                 break
             message_type = decode_message_bytes(data=data)
 
@@ -73,7 +95,7 @@ def handle_connection(conn: socket.socket):
                     )
                     logger.debug(f"returning default message: {response_bytes}")
                     conn.sendall(response_bytes)
-    except ConnectionResetError, BrokenPipeError:
+    except (ConnectionResetError, BrokenPipeError):
         pass
     finally:
         # close the connection

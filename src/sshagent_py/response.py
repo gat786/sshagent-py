@@ -3,7 +3,6 @@ import struct
 
 from .types import SSH_Messages
 
-
 logger = logging.getLogger(__name__)
 
 
