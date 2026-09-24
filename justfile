@@ -3,3 +3,6 @@ run:
 
 test:
     uv run python -m unittest discover -s tests -v
+
+test-socat:
+    uv run python -m unittest discover -s tests -p "test_socat.py" -v
