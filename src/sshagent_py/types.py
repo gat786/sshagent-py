@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from enum import IntEnum
 
 
@@ -53,3 +54,9 @@ valid_response_messages = [
     SSH_Messages.SSH_AGENT_EXTENSION_FAILURE,
     SSH_Messages.SSH_AGENT_EXTENSION_RESPONSE
 ]
+
+@dataclass
+class SshRequest():
+    size_of_request: int
+    request_method: int
+    request_body: bytes

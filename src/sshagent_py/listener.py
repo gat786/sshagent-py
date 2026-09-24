@@ -5,12 +5,19 @@ import threading
 
 from . import response
 from .message import decode_message_bytes
-from .types import SSH_Messages
+from .types import SSH_Messages, SshRequest
 
 logger = logging.getLogger(__name__)
 _PACKET_LENGTH_BYTES = 4
 _RECV_CHUNK_SIZE = 64 * 1024
 
+def split_data(data: bytes) -> SshRequest:
+    """should be called on a valid request only, returns size, method and body as a dataclass representation"""
+    return SshRequest(
+        size_of_request=0,
+        request_method=1,
+        request_body=bytes("a", encoding="utf-8")
+    )
 
 def _recv_exactly(conn: socket.socket, size: int) -> bytes | None:
     data = bytearray()
@@ -68,20 +75,25 @@ def setup_listener() -> None:
 def handle_connection(conn: socket.socket):
     try:
         logger.info(f"Connection from {str(conn).split(', ')[0][-4:]}")
-
         while True:
             data = receive_packet(conn)
             if data is None:
                 logger.debug("client closed the connection")
                 break
             message_type = decode_message_bytes(data=data)
-
             match message_type:
                 case SSH_Messages.SSH_AGENTC_REQUEST_IDENTITIES:
                     response_bytes = response.prepare_response(
                         message_type=SSH_Messages.SSH_AGENT_IDENTITIES_ANSWER,
                     )
                     logger.debug(f"returning indentities list: {response_bytes}")
+                    conn.sendall(response_bytes)
+
+                case SSH_Messages.SSH_AGENTC_ADD_IDENTITY:
+                    breakpoint()
+                    response_bytes = response.prepare_response(
+                        message_type=SSH_Messages.SSH_AGENT_FAILURE
+                    )
                     conn.sendall(response_bytes)
 
                 case SSH_Messages.INVALID:
@@ -95,6 +107,7 @@ def handle_connection(conn: socket.socket):
                     )
                     logger.debug(f"returning default message: {response_bytes}")
                     conn.sendall(response_bytes)
+
     except (ConnectionResetError, BrokenPipeError):
         pass
     finally:

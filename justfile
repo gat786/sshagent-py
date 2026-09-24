@@ -1,5 +1,5 @@
 run:
-    uv run sshagent-py
+    uv run --with debugpy sshagent-py
 
 test:
     uv run python -m unittest discover -s tests -v
