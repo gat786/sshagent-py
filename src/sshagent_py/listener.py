@@ -4,7 +4,8 @@ import socket
 import threading
 
 from . import response
-from .message import decode_message_bytes
+from .add_key import add_key
+from .message import decode_message_bytes, parse_ssh_request
 from .types import SSH_Messages, SshRequest
 
 logger = logging.getLogger(__name__)
@@ -90,7 +91,8 @@ def handle_connection(conn: socket.socket):
                     conn.sendall(response_bytes)
 
                 case SSH_Messages.SSH_AGENTC_ADD_IDENTITY:
-                    breakpoint()
+                    ssh_request = parse_ssh_request(data=data)
+                    add_key(data=ssh_request.request_body)
                     response_bytes = response.prepare_response(
                         message_type=SSH_Messages.SSH_AGENT_FAILURE
                     )

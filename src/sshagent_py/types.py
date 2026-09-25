@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from enum import IntEnum
+from typing import Literal, List
 
 
 class SSH_Messages(IntEnum):
@@ -57,6 +58,37 @@ valid_response_messages = [
 
 @dataclass
 class SshRequest():
+    # this will change according to the request contents
     size_of_request: int
+    # this should be equal to the IntEnum value we have above
     request_method: int
+    # we will have to format this according to different specifications
+    # depending on the size and method mentioned above.
     request_body: bytes
+
+@dataclass
+class SSHKeyLifetimeConstraint:
+    seconds: int
+
+@dataclass
+class SSHKeyConfirmationConstraint:
+    confirm: bool = False
+
+@dataclass
+class EDDsaKey():
+    comment: str
+    public_key: bytes
+    private_seed_and_public_key: bytes
+    private_seed: bytes
+    # Literal["ssh-ed25519", "ssh-ed448"]
+    type: str = "ssh-ed25519"
+
+    # constraints: List = []
+
+@dataclass
+class ECDsaKey():
+    pass
+
+@dataclass
+class DsaKey():
+    type: str
