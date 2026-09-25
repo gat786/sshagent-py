@@ -55,6 +55,10 @@ def parse_ssh_request(data: bytes) -> SshRequest:
     )
 
 def parse_eddsa_key(data: bytes) -> EDDsaKey:
+    """Parses contents and returns a DataClass representing the same object
+
+    this function assumes that the data being passed is a valid bytestream representation of a EDDsaKey passed into it. Validity of the stream must be verified before hand.
+    """
     # implementation for eddsa key
     key_name_size = data[:4]
     key_name_size = int.from_bytes(key_name_size, byteorder="big")
@@ -70,7 +74,7 @@ def parse_eddsa_key(data: bytes) -> EDDsaKey:
         pub_k_starts_from:
             pub_k_starts_from + public_key_size
     ]
-    breakpoint()
+
     private_key_size = data[
         pub_k_starts_from + public_key_size
         : (pub_k_starts_from + public_key_size) + 4
