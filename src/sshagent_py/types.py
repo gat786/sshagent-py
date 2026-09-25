@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import IntEnum
 from typing import Literal, List
@@ -56,6 +57,19 @@ valid_response_messages = [
     SSH_Messages.SSH_AGENT_EXTENSION_RESPONSE
 ]
 
+def int_uint32(num: int) -> bytes:
+    return num.to_bytes(
+        length=4,
+        byteorder="big",
+        signed=False
+    )
+
+def str_bytes(content: str) -> bytes:
+    return int_uint32(len(content)) + bytes(content, encoding="utf-8")
+
+def len_wrap_bytes(b: bytes) -> bytes:
+    return int_uint32(len(b)) + b
+
 @dataclass
 class SshRequest():
     # this will change according to the request contents
@@ -75,15 +89,28 @@ class SSHKeyConfirmationConstraint:
     confirm: bool = False
 
 @dataclass
-class EDDsaKey():
+class SSHCryptoKey(ABC):
+    # Can be either
+    # "ssh-ed25519", "ssh-ed448"
+    # "ssh-dss"
+    # "ecdsa-sha2"
+    # "ssh-rsa"
+    type: str
+
+    @abstractmethod
+    def blob_comment(self) -> tuple[str, bytes, str]:
+        pass
+
+@dataclass
+class EDDsaKey(SSHCryptoKey):
     comment: str
     public_key: bytes
     private_seed_and_public_key: bytes
     private_seed: bytes
-    # Literal["ssh-ed25519", "ssh-ed448"]
-    type: str = "ssh-ed25519"
 
-    # constraints: List = []
+    def blob_comment(self) -> tuple[str, bytes,str]:
+        return self.type, self.public_key, self.comment
+
 
 @dataclass
 class ECDsaKey():

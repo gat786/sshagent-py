@@ -1,16 +1,27 @@
+import struct
+from typing import List
 import logging
 import os
 import socket
 import threading
 
 from . import response
-from .add_key import add_key
+from .add_key import get_parsed_key
 from .message import decode_message_bytes, parse_ssh_request
-from .types import SSH_Messages, SshRequest
+from .types import (
+    SSH_Messages,
+    SshRequest,
+    SSHCryptoKey,
+    int_uint32,
+    str_bytes,
+    len_wrap_bytes
+)
 
 logger = logging.getLogger(__name__)
 _PACKET_LENGTH_BYTES = 4
 _RECV_CHUNK_SIZE = 64 * 1024
+
+identities: List[SSHCryptoKey] = []
 
 def split_data(data: bytes) -> SshRequest:
     """should be called on a valid request only, returns size, method and body as a dataclass representation"""
@@ -84,17 +95,39 @@ def handle_connection(conn: socket.socket):
             message_type = decode_message_bytes(data=data)
             match message_type:
                 case SSH_Messages.SSH_AGENTC_REQUEST_IDENTITIES:
+                    identities_count = len(identities)
+                    res = int_uint32(identities_count)
+
+                    for id in identities:
+                        blob_comment = id.blob_comment()
+                        key_t       = blob_comment[0]
+                        public_k    = blob_comment[1]
+                        comment     = blob_comment[2]
+                        key_blob = (
+                            str_bytes(key_t) +
+                            len_wrap_bytes(public_k)
+                        )
+
+                        comment_b = str_bytes(comment)
+                        res = res + len_wrap_bytes(key_blob) + comment_b
+
                     response_bytes = response.prepare_response(
                         message_type=SSH_Messages.SSH_AGENT_IDENTITIES_ANSWER,
+                        content=res
                     )
+
+                    breakpoint()
+
                     logger.debug(f"returning indentities list: {response_bytes}")
                     conn.sendall(response_bytes)
 
+
                 case SSH_Messages.SSH_AGENTC_ADD_IDENTITY:
                     ssh_request = parse_ssh_request(data=data)
-                    add_key(data=ssh_request.request_body)
+                    ssh_key = get_parsed_key(data=ssh_request.request_body)
+                    identities.append(ssh_key)
                     response_bytes = response.prepare_response(
-                        message_type=SSH_Messages.SSH_AGENT_FAILURE
+                        message_type=SSH_Messages.SSH_AGENT_SUCCESS
                     )
                     conn.sendall(response_bytes)
 
