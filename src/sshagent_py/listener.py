@@ -1,11 +1,11 @@
 import base64
 import hashlib
-import struct
-from typing import List
 import logging
 import os
 import socket
+import struct
 import threading
+from typing import List
 
 from . import response
 from .add_key import get_parsed_key
@@ -101,17 +101,11 @@ def handle_connection(conn: socket.socket):
                     res = int_uint32(identities_count)
 
                     for fp, ssh_key in identities.items():
-                        blob_comment = ssh_key.blob_comment()
-                        key_t       = blob_comment[0]
-                        public_k    = blob_comment[1]
-                        comment     = blob_comment[2]
-                        key_blob = (
-                            str_bytes(key_t) +
-                            len_wrap_bytes(public_k)
-                        )
-
-                        comment_b = str_bytes(comment)
-                        res = res + len_wrap_bytes(key_blob) + comment_b
+                        if isinstance(ssh_key, EDDsaKey):
+                            key_blob = ssh_key.key_blob
+                            comment = ssh_key.comment
+                            comment_b = str_bytes(comment)
+                            res = res + len_wrap_bytes(key_blob) + comment_b
 
                     response_bytes = response.prepare_response(
                         message_type=SSH_Messages.SSH_AGENT_IDENTITIES_ANSWER,
@@ -126,7 +120,11 @@ def handle_connection(conn: socket.socket):
                     ssh_request = parse_ssh_request(data=data)
                     ssh_key: SSHCryptoKey = get_parsed_key(data=ssh_request.request_body)
                     if isinstance(ssh_key, EDDsaKey):
-                        k_digest = hashlib.sha256(ssh_key.key_blob).digest()
+                        kb = (
+                            str_bytes(ssh_key.type)
+                            + len_wrap_bytes(ssh_key.public_key)
+                        )
+                        k_digest = hashlib.sha256(kb).digest()
                         fingerprint = base64.b64encode(
                             k_digest
                         ).decode().rstrip("=")
