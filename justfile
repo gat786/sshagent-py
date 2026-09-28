@@ -1,6 +1,9 @@
 run:
     uv run --with debugpy sshagent-py
 
+fix-import-sorting:
+    uv run ruff check --fix
+
 test:
     uv run python -m unittest discover -s tests -v
 

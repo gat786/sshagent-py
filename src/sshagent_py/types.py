@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import IntEnum
-from typing import Literal, List
 
 
 class SSH_Messages(IntEnum):

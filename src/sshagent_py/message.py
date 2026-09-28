@@ -1,6 +1,6 @@
 import logging
 
-from .types import SSH_Messages, supported_incoming_messages, SshRequest, EDDsaKey
+from .types import EDDsaKey, SSH_Messages, SshRequest, supported_incoming_messages
 
 logger = logging.getLogger(__name__)
 

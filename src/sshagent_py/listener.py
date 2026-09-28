@@ -4,19 +4,18 @@ import logging
 import os
 import socket
 import threading
-from typing import List
 
 from . import response
 from .add_key import get_parsed_key
 from .message import decode_message_bytes, parse_ssh_request
 from .types import (
-    SSH_Messages,
-    SshRequest,
-    SSHCryptoKey,
-    int_uint32,
-    str_bytes,
-    len_wrap_bytes,
     EDDsaKey,
+    SSH_Messages,
+    SSHCryptoKey,
+    SshRequest,
+    int_uint32,
+    len_wrap_bytes,
+    str_bytes,
 )
 
 logger = logging.getLogger(__name__)
@@ -100,7 +99,7 @@ def handle_connection(conn: socket.socket):
                     identities_count = len(identities)
                     res = int_uint32(identities_count)
 
-                    for fp, ssh_key in identities.items():
+                    for ssh_key in identities.values():
                         if isinstance(ssh_key, EDDsaKey):
                             key_blob = ssh_key.key_blob
                             comment = ssh_key.comment
