@@ -3,7 +3,6 @@ import hashlib
 import logging
 import os
 import socket
-import struct
 import threading
 from typing import List
 
@@ -16,7 +15,8 @@ from .types import (
     SSHCryptoKey,
     int_uint32,
     str_bytes,
-    len_wrap_bytes, EDDsaKey
+    len_wrap_bytes,
+    EDDsaKey,
 )
 
 logger = logging.getLogger(__name__)
@@ -25,13 +25,13 @@ _RECV_CHUNK_SIZE = 64 * 1024
 
 identities: dict[str, SSHCryptoKey] = {}
 
+
 def split_data(data: bytes) -> SshRequest:
     """should be called on a valid request only, returns size, method and body as a dataclass representation"""
     return SshRequest(
-        size_of_request=0,
-        request_method=1,
-        request_body=bytes("a", encoding="utf-8")
+        size_of_request=0, request_method=1, request_body=bytes("a", encoding="utf-8")
     )
+
 
 def _recv_exactly(conn: socket.socket, size: int) -> bytes | None:
     data = bytearray()
@@ -109,7 +109,7 @@ def handle_connection(conn: socket.socket):
 
                     response_bytes = response.prepare_response(
                         message_type=SSH_Messages.SSH_AGENT_IDENTITIES_ANSWER,
-                        content=res
+                        content=res,
                     )
 
                     logger.debug(f"returning indentities list: {response_bytes}")
@@ -120,26 +120,26 @@ def handle_connection(conn: socket.socket):
                         message_type=SSH_Messages.SSH_AGENT_SUCCESS,
                     )
                     conn.sendall(response_bytes)
-
                 case SSH_Messages.SSH_AGENTC_ADD_IDENTITY:
                     ssh_request = parse_ssh_request(data=data)
-                    ssh_key: SSHCryptoKey | None = get_parsed_key(data=ssh_request.request_body)
+                    ssh_key: SSHCryptoKey | None = get_parsed_key(
+                        data=ssh_request.request_body
+                    )
                     if isinstance(ssh_key, EDDsaKey):
-                        kb = (
-                            str_bytes(ssh_key.type)
-                            + len_wrap_bytes(ssh_key.public_key)
+                        kb = str_bytes(ssh_key.type) + len_wrap_bytes(
+                            ssh_key.public_key
                         )
                         k_digest = hashlib.sha256(kb).digest()
-                        fingerprint = base64.b64encode(
-                            k_digest
-                        ).decode().rstrip("=")
+                        fingerprint = base64.b64encode(k_digest).decode().rstrip("=")
                         identities[fingerprint] = ssh_key
                         response_bytes = response.prepare_response(
                             message_type=SSH_Messages.SSH_AGENT_SUCCESS
                         )
                         conn.sendall(response_bytes)
                     else:
-                        logging.warning("the client as of now only supports adding EDDsa Keys.")
+                        logger.warning(
+                            "the client as of now only supports adding EDDsa Keys."
+                        )
 
                         response_bytes = response.prepare_response(
                             message_type=SSH_Messages.SSH_AGENT_FAILURE
@@ -158,7 +158,7 @@ def handle_connection(conn: socket.socket):
                     logger.debug(f"returning default message: {response_bytes}")
                     conn.sendall(response_bytes)
 
-    except (ConnectionResetError, BrokenPipeError):
+    except ConnectionResetError, BrokenPipeError:
         pass
     finally:
         # close the connection
