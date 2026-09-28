@@ -98,12 +98,20 @@ def parse_eddsa_key(data: bytes) -> EDDsaKey:
             comment_starts_from + comment_size
     ], encoding="utf-8")
 
+    key_blob = (
+        len(b"ssh-ed25519").to_bytes(4, "big")
+        + b"ssh-ed25519"
+        + len(public_key_content).to_bytes(4, "big")
+        + public_key_content
+    )
+
     return EDDsaKey(
         type=key_name,
+        comment=comment_content,
+        key_blob=key_blob,
         public_key=public_key_content,
         private_seed=private_seed_only,
         private_seed_and_public_key=private_key_content,
-        comment=comment_content
     )
 
 def parse_rsa_key() -> None:

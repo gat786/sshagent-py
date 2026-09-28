@@ -104,6 +104,7 @@ class SSHCryptoKey(ABC):
 @dataclass
 class EDDsaKey(SSHCryptoKey):
     comment: str
+    key_blob: bytes
     public_key: bytes
     private_seed_and_public_key: bytes
     private_seed: bytes
