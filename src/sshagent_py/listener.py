@@ -115,6 +115,11 @@ def handle_connection(conn: socket.socket):
                     logger.debug(f"returning indentities list: {response_bytes}")
                     conn.sendall(response_bytes)
 
+                case SSH_Messages.SSH_AGENTC_SIGN_REQUEST:
+                    response_bytes = response.prepare_response(
+                        message_type=SSH_Messages.SSH_AGENT_SUCCESS,
+                    )
+                    conn.sendall(response_bytes)
 
                 case SSH_Messages.SSH_AGENTC_ADD_IDENTITY:
                     ssh_request = parse_ssh_request(data=data)

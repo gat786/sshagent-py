@@ -7,7 +7,9 @@ authors = [
     { name = "Ganesh Tiwari", email = "ganesht049@gmail.com" }
 ]
 requires-python = ">=3.14"
-dependencies = []
+dependencies = [
+    "cryptography>=50.0.1",
+]
 
 [project.scripts]
 sshagent-py = "sshagent_py:main"
