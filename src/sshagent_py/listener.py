@@ -118,7 +118,7 @@ def handle_connection(conn: socket.socket):
 
                 case SSH_Messages.SSH_AGENTC_ADD_IDENTITY:
                     ssh_request = parse_ssh_request(data=data)
-                    ssh_key: SSHCryptoKey = get_parsed_key(data=ssh_request.request_body)
+                    ssh_key: SSHCryptoKey | None = get_parsed_key(data=ssh_request.request_body)
                     if isinstance(ssh_key, EDDsaKey):
                         kb = (
                             str_bytes(ssh_key.type)
@@ -129,11 +129,17 @@ def handle_connection(conn: socket.socket):
                             k_digest
                         ).decode().rstrip("=")
                         identities[fingerprint] = ssh_key
+                        response_bytes = response.prepare_response(
+                            message_type=SSH_Messages.SSH_AGENT_SUCCESS
+                        )
+                        conn.sendall(response_bytes)
+                    else:
+                        logging.warning("the client as of now only supports adding EDDsa Keys.")
 
-                    response_bytes = response.prepare_response(
-                        message_type=SSH_Messages.SSH_AGENT_SUCCESS
-                    )
-                    conn.sendall(response_bytes)
+                        response_bytes = response.prepare_response(
+                            message_type=SSH_Messages.SSH_AGENT_FAILURE
+                        )
+                        conn.sendall(response_bytes)
 
                 case SSH_Messages.INVALID:
                     response_bytes = bytes("hello\n", "utf-8")
